@@ -21,12 +21,12 @@ export default function Navbar() {
         <Link href="/" className="font-medium hover:text-blue-500 text-white">
           Home
         </Link>
-        <Link
+        {/* <Link
           href="/employees"
           className="font-medium hover:text-blue-500 text-white"
         >
           Employees
-        </Link>
+        </Link> */}
         <Link
           href="/about"
           className="font-medium hover:text-blue-500 text-white"

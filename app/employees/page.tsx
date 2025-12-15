@@ -22,7 +22,7 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Employee } from "@/graphql/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import EmployeeRow from "../components/EmployeeRow";
+import EmployeeTableSkeleton from "../components/EmployeeTableSkeleton";
 
 const LIST_EMPLOYEES = gql`
   query {
@@ -88,7 +89,7 @@ const DELETE_EMPLOYEE = gql`
 
 const UPDATE_EMPLOYEE = gql`
   mutation UpdateEmployee(
-    $id: ID!
+    $id: Int!
     $name: String!
     $age: Int!
     $designation: String!
@@ -122,7 +123,7 @@ export default function EmployeesPage() {
     LIST_EMPLOYEES,
     {
       client,
-      fetchPolicy: "network-only",
+      fetchPolicy: "cache-and-network",
     }
   );
   const [filter, setFilter] = useState("");
@@ -163,7 +164,7 @@ export default function EmployeesPage() {
       },
     });
     setForm({ name: "", age: "", designation: "", gender: "", attendence: "" });
-    refetch(); //
+    // refetch(); //
   };
 
   // const [deleteEmployee] = useMutation(DELETE_EMPLOYEE, {
@@ -205,22 +206,32 @@ export default function EmployeesPage() {
     indexOfLastRecord
   );
 
-  if (loading)
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Loading employees...</p>
-      </div>
-    );
+  const [showSkeleton, setShowSkeleton] = useState(true);
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => {
+        setShowSkeleton(false);
+      }, 800); // 👈 800ms (adjust as you like)
 
-  if (error)
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-lg font-medium text-red-500">
-          Error: {error.message}
-        </p>
-      </div>
-    );
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
+  // if (loading)
+  //   return (
+  //     <div className="flex min-h-screen flex-col items-center justify-center gap-3">
+  //       <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  //       <p className="text-sm text-muted-foreground">Loading employees...</p>
+  //     </div>
+  //   );
+
+  // if (error)
+  //   return (
+  //     <div className="flex min-h-screen items-center justify-center">
+  //       <p className="text-lg font-medium text-red-500">
+  //         Error: {error.message}
+  //       </p>
+  //     </div>
+  //   );
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -403,7 +414,7 @@ export default function EmployeesPage() {
                       }
                     /> */}
                     <Select
-                      value={form.gender}
+                      value={editForm.gender}
                       onValueChange={(value) =>
                         setForm((prev) => ({ ...prev, gender: value }))
                       }
@@ -480,7 +491,9 @@ export default function EmployeesPage() {
             </TableHeader>
 
             <TableBody>
-              {currentEmployees.length > 0 ? (
+              {showSkeleton ? (
+                <EmployeeTableSkeleton rows={recordsPerPage} />
+              ) : currentEmployees.length > 0 ? (
                 currentEmployees.map((emp) => (
                   <EmployeeRow
                     key={emp.id}
@@ -505,7 +518,7 @@ export default function EmployeesPage() {
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="text-center text-muted-foreground py-6"
                   >
                     No employees found
